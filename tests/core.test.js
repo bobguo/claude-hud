@@ -313,6 +313,36 @@ test('countConfigs excludes disabled project .mcp.json servers', async () => {
   }
 });
 
+test('countConfigs excludes disabled project .mcp.json servers with corrected key casing', async () => {
+  const homeDir = await mkdtemp(path.join(tmpdir(), 'claude-hud-home-'));
+  const projectDir = await mkdtemp(path.join(tmpdir(), 'claude-hud-project-'));
+  const originalHome = process.env.HOME;
+  process.env.HOME = homeDir;
+
+  try {
+    await mkdir(path.join(homeDir, '.claude'), { recursive: true });
+    await mkdir(path.join(projectDir, '.claude'), { recursive: true });
+
+    await writeFile(
+      path.join(projectDir, '.mcp.json'),
+      JSON.stringify({ mcpServers: { mcp1: {}, mcp2: {}, mcp3: {} } }),
+      'utf8'
+    );
+    await writeFile(
+      path.join(projectDir, '.claude', 'settings.local.json'),
+      JSON.stringify({ disabledMcpJsonServers: ['mcp1'] }),
+      'utf8'
+    );
+
+    const counts = await countConfigs(projectDir);
+    assert.equal(counts.mcpCount, 2);
+  } finally {
+    process.env.HOME = originalHome;
+    await rm(homeDir, { recursive: true, force: true });
+    await rm(projectDir, { recursive: true, force: true });
+  }
+});
+
 test('countConfigs handles all MCPs disabled', async () => {
   const homeDir = await mkdtemp(path.join(tmpdir(), 'claude-hud-home-'));
   const originalHome = process.env.HOME;

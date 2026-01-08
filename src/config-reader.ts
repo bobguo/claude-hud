@@ -13,7 +13,7 @@ export interface ConfigCounts {
 }
 
 // Valid keys for disabled MCP arrays in config files
-type DisabledMcpKey = 'disabledMcpServers' | 'disabledMcpjsonServers';
+type DisabledMcpKey = 'disabledMcpServers' | 'disabledMcpjsonServers' | 'disabledMcpJsonServers';
 
 function getMcpServerNames(filePath: string): Set<string> {
   if (!fs.existsSync(filePath)) return new Set();
@@ -175,8 +175,11 @@ export async function countConfigs(cwd?: string): Promise<ConfigCounts> {
     }
     hooksCount += countHooksInFile(localSettings);
 
-    // Get disabled .mcp.json servers from settings.local.json
-    const disabledMcpJsonServers = getDisabledMcpServers(localSettings, 'disabledMcpjsonServers');
+    // Get disabled .mcp.json servers from settings.local.json (support legacy and corrected key casing)
+    const disabledMcpJsonServers = new Set([
+      ...getDisabledMcpServers(localSettings, 'disabledMcpjsonServers'),
+      ...getDisabledMcpServers(localSettings, 'disabledMcpJsonServers'),
+    ]);
     for (const name of disabledMcpJsonServers) {
       mcpJsonServers.delete(name);
     }
@@ -194,4 +197,3 @@ export async function countConfigs(cwd?: string): Promise<ConfigCounts> {
 
   return { claudeMdCount, rulesCount, mcpCount, hooksCount };
 }
-
