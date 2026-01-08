@@ -149,8 +149,11 @@ export async function countConfigs(cwd) {
             projectMcpServers.add(name);
         }
         hooksCount += countHooksInFile(localSettings);
-        // Get disabled .mcp.json servers from settings.local.json
-        const disabledMcpJsonServers = getDisabledMcpServers(localSettings, 'disabledMcpjsonServers');
+        // Get disabled .mcp.json servers from settings.local.json (support legacy and corrected key casing)
+        const disabledMcpJsonServers = new Set([
+            ...getDisabledMcpServers(localSettings, 'disabledMcpjsonServers'),
+            ...getDisabledMcpServers(localSettings, 'disabledMcpJsonServers'),
+        ]);
         for (const name of disabledMcpJsonServers) {
             mcpJsonServers.delete(name);
         }
